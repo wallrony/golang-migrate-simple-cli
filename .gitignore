@@ -1,0 +1,5 @@
+env-file
+go.sum
+
+*.db
+*.sql
