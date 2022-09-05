@@ -52,7 +52,7 @@ func dropDatabase() {
 	var err error
 	err = migrationManager.Drop()
 	if err != nil {
-		log.Fatalf("An error occurred when dropping the database: %s", err.Error())
+		dealWithMigrationError(err)
 	}
 }
 
@@ -66,13 +66,13 @@ func downMigrations() {
 	} else {
 		err = migrationManager.Steps(*flags.ExecutionCount * -1)
 	}
-	if err != nil && !strings.Contains(err.Error(), "no change") {
-		log.Fatalf("An error occurred when migrating: %s", err.Error())
+	if err != nil {
+		dealWithMigrationError(err)
 	}
 }
 
 func upMigrations() {
-	fmt.Println("Executing down migrations...")
+	fmt.Println("Executing up migrations...")
 	migrationManager, db := getMigrationManager()
 	defer db.Close()
 	var err error
@@ -81,8 +81,8 @@ func upMigrations() {
 	} else {
 		err = migrationManager.Steps(*flags.ExecutionCount)
 	}
-	if err != nil && !strings.Contains(err.Error(), "no change") {
-		log.Fatalf("An error occurred when migrating: %s", err.Error())
+	if err != nil {
+		dealWithMigrationError(err)
 	}
 }
 
@@ -157,4 +157,13 @@ func getMigrationsPath() string {
 		return *flags.MigrationsPath
 	}
 	return os.Getenv("DATABASE_MIGRATIONS_FOLDER_PATH")
+}
+
+func dealWithMigrationError(err error) {
+	if !strings.Contains(err.Error(), "no change") {
+		if !strings.Contains(err.Error(), "no change") {
+			log.Fatalf("An error occurred when migrating: %s", err.Error())
+		}
+		fmt.Println("No new migrations were found.")
+	}
 }
